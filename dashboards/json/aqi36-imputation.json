@@ -1,0 +1,91 @@
+{
+  "uid": "t27-aqi36",
+  "title": "Team 27 - AQI-36 Streaming Imputation",
+  "tags": ["ioe413", "team27"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "2014-04-30T00:00:00Z", "to": "2014-06-01T00:00:00Z" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "PM2.5 - observed vs imputed (all stations)",
+      "gridPos": { "h": 9, "w": 16, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": { "unit": "conmgm3", "custom": { "lineWidth": 1, "fillOpacity": 5 } },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "query": "from(bucket: \"aqi36\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"pm25\" and r._field == \"value\")\n  |> group(columns: [\"imputed\"])\n  |> aggregateWindow(every: 1h, fn: mean, createEmpty: false)"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Missing cells per window",
+      "gridPos": { "h": 9, "w": 8, "x": 16, "y": 0 },
+      "targets": [
+        {
+          "refId": "A",
+          "query": "from(bucket: \"aqi36\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"imputation_telemetry\" and r._field == \"n_missing_cells\")\n  |> last()"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Per-window inference latency (ms)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 9 },
+      "fieldConfig": { "defaults": { "unit": "ms" }, "overrides": [] },
+      "targets": [
+        {
+          "refId": "A",
+          "query": "from(bucket: \"aqi36\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"imputation_telemetry\" and r._field == \"latency_ms\")"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Cost: network function evaluations per window",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 9 },
+      "description": "The hardware-independent cost unit. CSDI defaults to 50 steps x 100 samples = 5000. The Phase 2 router drives this down per gap.",
+      "targets": [
+        {
+          "refId": "A",
+          "query": "from(bucket: \"aqi36\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"imputation_telemetry\" and r._field == \"nfe_per_window\")"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Accuracy on artificially masked cells (MAE / CRPS)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 17 },
+      "targets": [
+        {
+          "refId": "A",
+          "query": "from(bucket: \"aqi36\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"imputation_telemetry\" and (r._field == \"window_mae\" or r._field == \"window_crps\"))"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "barchart",
+      "title": "FAIRNESS: mean absolute error by station",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 17 },
+      "description": "The panel none of the three base papers has. Aggregate MAE hides that error concentrates on the worst-served stations.",
+      "targets": [
+        {
+          "refId": "A",
+          "query": "from(bucket: \"aqi36\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"pm25\" and r._field == \"abs_error\")\n  |> group(columns: [\"station\"])\n  |> mean()\n  |> group()\n  |> sort(columns: [\"_value\"], desc: true)"
+        }
+      ]
+    }
+  ]
+}

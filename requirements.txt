@@ -1,0 +1,12 @@
+# Install CPU-only torch first:
+#   pip install --index-url https://download.pytorch.org/whl/cpu torch
+torch==2.14.0
+pypots==1.5
+numpy==2.5.3
+pandas==3.0.6
+scikit-learn==1.9.1
+lightgbm
+kafka-python
+influxdb-client
+pyyaml
+pyspark==4.0.1

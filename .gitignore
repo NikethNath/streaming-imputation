@@ -1,0 +1,21 @@
+.venv/
+__pycache__/
+*.pyc
+*.pt
+*.pkl
+*.ckpt
+checkpoints/
+runs/
+mlruns/
+.influxdb/
+.grafana/
+*.log
+.ipynb_checkpoints/
+results/*.csv
+results/*.json
+results/*.png
+!results/.gitkeep
+
+# Third-party benchmark data — fetch with scripts/fetch_data.sh
+data/pm25/
+.spark-checkpoint/
