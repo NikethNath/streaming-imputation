@@ -110,20 +110,28 @@ python3 -m venv .venv
 
 # 5. Open the dashboard
 xdg-open http://localhost:3000/d/t27-aqi36
+
+# 6. Verify every link in the chain
+.venv/bin/python scripts/verify_gate.py
 ```
 
 ### Spark path
 
 ```bash
 .venv/bin/pip install pyspark
-spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.13:4.0.1 \
+python stream/spark_job.py                 # self-resolving connector
+# or:
+spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.13:4.2.0 \
   stream/spark_job.py
 ```
 
-> **Java version.** Spark 4.0 supports Java 17 and 21. This machine has Java 25,
-> which is newer than Spark tests against. If `spark_job.py` fails to launch,
-> install Java 21 and set `JAVA_HOME`. `stream/consumer.py` is the
-> engine-independent fallback and produces identical output.
+The job declares the Kafka connector itself, so plain `python stream/spark_job.py`
+works too; the JAR resolves from Maven on first run.
+
+> **Java version.** Verified working on **Java 25** with Spark 4.2.0, which is
+> newer than Spark documents support for. If a different JDK gives trouble,
+> Java 21 is the safe choice. `stream/consumer.py` is the engine-independent
+> path and produces identical output and telemetry.
 
 ---
 
@@ -147,8 +155,10 @@ eval/
   metrics.py             MAE / RMSE / MRE / CRPS / PICP, per-station breakdown
   equity.py              worst-decile, Gini, error-vs-missingness, AQI bands
 scripts/
+  fetch_data.sh          download the AQI-36 benchmark
   train_baseline.py      train + score + write results/baseline_metrics.json
   train_overnight.sh     full-quality training run
+  verify_gate.py         end-to-end Phase 1 gate check
 dashboards/              Grafana provisioning and dashboard JSON
 ```
 
@@ -219,7 +229,7 @@ health department would actually act on.
 | PyTorch | 2.14.0 (CPU) |
 | PyPOTS | 1.5 |
 | Apache Kafka | 3.9.0 (KRaft) |
-| Apache Spark | 4.0.1 |
+| Apache Spark | 4.2.0 |
 | InfluxDB | 2.7 |
 | Grafana | 11.3.0 |
 

@@ -52,6 +52,8 @@ def main():
     ap.add_argument("--stride", type=int, default=6)
     ap.add_argument("--sink", choices=["influx", "console"], default="influx")
     ap.add_argument("--starting-offsets", default="earliest")
+    ap.add_argument("--master", default="local[2]")
+    ap.add_argument("--max-windows", type=int, default=None)
     args = ap.parse_args()
 
     cfg = yaml.safe_load(open(args.config))
@@ -59,8 +61,14 @@ def main():
     win = cfg["data"]["window_len"]
     n_samples = args.n_samples or cfg["model"]["n_sampling_times"]
 
+    # Declaring the connector here means `python stream/spark_job.py` works as
+    # well as spark-submit --packages; the JAR is resolved from Maven on first run.
+    scala_v = "2.13"
     spark = (SparkSession.builder
              .appName("team27-aqi36-imputation")
+             .master(args.master)
+             .config("spark.jars.packages",
+                     f"org.apache.spark:spark-sql-kafka-0-10_{scala_v}:{__import__('pyspark').__version__}")
              .config("spark.sql.shuffle.partitions", "4")
              .config("spark.sql.streaming.checkpointLocation", ".spark-checkpoint")
              .getOrCreate())
@@ -126,13 +134,21 @@ def main():
             state["n"] += 1
             print(f"[spark] batch={batch_id} window={state['n']} "
                   f"@ {snap['timestamps'][-1]} latency={latency_ms:.0f}ms", flush=True)
+            if args.max_windows and state["n"] >= args.max_windows:
+                state["stop"] = True
 
     query = (parsed.writeStream
              .foreachBatch(process_batch)
              .outputMode("append")
              .trigger(processingTime="5 seconds")
              .start())
-    query.awaitTermination()
+    if args.max_windows:
+        while query.isActive and not state.get("stop"):
+            query.awaitTermination(5)
+        query.stop()
+        print(f"[spark] stopped after {state['n']} windows")
+    else:
+        query.awaitTermination()
 
 
 if __name__ == "__main__":
