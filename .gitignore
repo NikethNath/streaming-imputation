@@ -12,7 +12,8 @@ mlruns/
 *.log
 .ipynb_checkpoints/
 results/*.csv
-results/*.json
+# keep the headline baseline result in git
+!results/baseline_metrics.json
 results/*.png
 !results/.gitkeep
 

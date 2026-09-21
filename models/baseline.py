@@ -61,14 +61,24 @@ class CSDIBaseline:
         )
 
     # -- training ---------------------------------------------------------
-    def train(self, train_windows: np.ndarray, val_windows: np.ndarray | None = None):
-        """train_windows: (n_windows, n_steps, n_features), NaN where missing."""
+    def train(self, train_windows: np.ndarray, val_windows: np.ndarray | None = None,
+              val_mask_rate: float = 0.1, seed: int = 27):
+        """train_windows: (n_windows, n_steps, n_features), NaN where missing.
+
+        The validation set needs X to be a *corrupted* copy and X_ori the intact
+        one -- PyPOTS scores only the cells that differ. Passing the same array
+        as both gives a validation loss of exactly 0.0 every epoch, which makes
+        early stopping fire immediately and keeps epoch 1 as "best".
+        """
         train_set = {"X": train_windows}
         val_set = None
         if val_windows is not None:
-            # PyPOTS scores validation against values it can see, so the
-            # val set needs both the corrupted series and the intact one.
-            val_set = {"X": val_windows, "X_ori": val_windows}
+            rng = np.random.default_rng(seed)
+            observed = ~np.isnan(val_windows)
+            hide = (rng.random(val_windows.shape) < val_mask_rate) & observed
+            val_corrupt = val_windows.copy()
+            val_corrupt[hide] = np.nan
+            val_set = {"X": val_corrupt, "X_ori": val_windows}
         self.model.fit(train_set, val_set)
         return self
 

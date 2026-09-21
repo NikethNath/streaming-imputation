@@ -40,6 +40,10 @@ def main():
     ap.add_argument("--eval-samples", type=int, default=50)
     ap.add_argument("--mask-rate", type=float, default=0.10)
     ap.add_argument("--train-stride", type=int, default=1)
+    ap.add_argument("--val-windows", type=int, default=16,
+                    help="cap the validation set; CSDI validation runs the "
+                         "full diffusion sampler, so a large val set "
+                         "dominates epoch time")
     ap.add_argument("--smoke", action="store_true", help="tiny run to prove the path works")
     args = ap.parse_args()
 
@@ -57,6 +61,14 @@ def main():
     val_w = to_windows(val_df, win, stride=win)
     test_w = to_windows(test_df, win, stride=win)
     print(f"windows train={train_w.shape} val={val_w.shape} test={test_w.shape}")
+
+    # Validation runs the diffusion sampler, so it costs far more per window
+    # than training does. Cap it -- we only need enough windows to rank
+    # checkpoints, not to produce a publishable number. Leaving this
+    # uncapped took 96 minutes per epoch.
+    if args.val_windows and len(val_w) > args.val_windows:
+        val_w = val_w[:args.val_windows]
+        print(f'validation capped to {len(val_w)} windows')
 
     scaler = Standardiser().fit(train_w)
     train_s = scaler.transform(train_w)

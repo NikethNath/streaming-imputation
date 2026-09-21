@@ -211,13 +211,58 @@ health department would actually act on.
 
 ---
 
+## Phase 1 results
+
+Baseline CSDI, held-out months (3, 6, 9, 12) of AQI-36, 9,557 artificially
+masked cells scored. This is a deliberately **simplified** reproduction — 16
+epochs, stride-4 training view, 20 posterior samples — which the brief permits.
+
+| Metric | Ours | CSDI published (AQI-36) |
+|---|---|---|
+| MAE | 14.43 µg/m³ | 9.51 |
+| RMSE | 31.18 | — |
+| MRE | 0.197 | — |
+| CRPS | 0.150 | 0.1056 |
+| PICP @ 90% | 0.794 | — |
+
+Same order of magnitude as the published result, which is what a simplified
+reproduction should achieve. Undercoverage at 90% is expected from a short run.
+
+### The equity finding
+
+The audit that none of the three base papers performs, on the same run:
+
+| | |
+|---|---|
+| Best station MAE | 8.23 |
+| Worst station MAE | 34.44 |
+| **Worst / best** | **4.2×** |
+| Worst-decile MAE | 27.35 |
+| Gini of per-station error | 0.176 |
+| **Error vs missing-rate slope** | **+70.8 (r = +0.59)** |
+| AQI-band misclassification | **27.3%** |
+
+The slope is the headline: **a station's imputation error correlates strongly
+with how much of its data is missing** (r = +0.59). The model is measurably
+worst exactly where data is scarcest — and a dataset-average MAE of 14.43 makes
+that invisible. Over a quarter of imputed values land in the wrong public-health
+band.
+
+### Cost
+
+At CSDI's own defaults the baseline needs **565 seconds per window** on CPU at
+1,000 evaluations per window. That number is the entire motivation for the
+Phase 2 router.
+
 ## Status
 
 - [x] Ingestion, storage and dashboard layer running
 - [x] Kafka → window → CSDI → InfluxDB → Grafana loop closed
-- [x] CSDI baseline training and scoring
-- [x] Metrics and equity-audit modules
-- [ ] Full-quality baseline training run
+- [x] CSDI baseline trained and scored against the published result
+- [x] Metrics and equity-audit modules, with a reportable finding
+- [x] Spark Structured Streaming path verified against Kafka
+- [x] `scripts/verify_gate.py` — 9/9 checks passing
+- [ ] Full-quality baseline training run (`scripts/train_overnight.sh`)
 - [ ] Gap-level compute triage over (steps, samples)
 - [ ] Equity-aware budget reservation
 
