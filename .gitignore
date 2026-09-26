@@ -20,3 +20,5 @@ results/*.png
 # Third-party benchmark data — fetch with scripts/fetch_data.sh
 data/pm25/
 .spark-checkpoint/
+results/*.npz
+results/*.pkl

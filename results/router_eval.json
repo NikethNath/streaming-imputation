@@ -1,0 +1,327 @@
+{
+  "oracle_frontier": [
+    {
+      "budget_nfe": 6780.0,
+      "budget_per_gap": 5.0,
+      "oracle_cost": 6780.0,
+      "oracle_MAE": 34.605262756347656,
+      "uniform_budget_idx": 0,
+      "uniform_cost": 6780.0,
+      "uniform_MAE": 34.60526133849557,
+      "oracle_gain_pct": -4.097215359778344e-06,
+      "escalation_rate": 0.0
+    },
+    {
+      "budget_nfe": 39636.92307692308,
+      "budget_per_gap": 29.23076923076923,
+      "oracle_cost": 39565.0,
+      "oracle_MAE": 9.273236274719238,
+      "uniform_budget_idx": 1,
+      "uniform_cost": 27120.0,
+      "uniform_MAE": 18.34112134725295,
+      "oracle_gain_pct": 49.440189074872784,
+      "escalation_rate": 0.6423303834808259
+    },
+    {
+      "budget_nfe": 72493.84615384616,
+      "budget_per_gap": 53.46153846153846,
+      "oracle_cost": 72490.0,
+      "oracle_MAE": 8.153986930847168,
+      "uniform_budget_idx": 2,
+      "uniform_cost": 54240.0,
+      "uniform_MAE": 13.32970507236357,
+      "oracle_gain_pct": 38.82845204315285,
+      "escalation_rate": 0.803834808259587
+    },
+    {
+      "budget_nfe": 105350.76923076923,
+      "budget_per_gap": 77.6923076923077,
+      "oracle_cost": 105060.0,
+      "oracle_MAE": 7.773202896118164,
+      "uniform_budget_idx": 2,
+      "uniform_cost": 54240.0,
+      "uniform_MAE": 13.32970507236357,
+      "oracle_gain_pct": 41.68510965606945,
+      "escalation_rate": 0.8613569321533924
+    },
+    {
+      "budget_nfe": 138207.6923076923,
+      "budget_per_gap": 101.92307692307692,
+      "oracle_cost": 138140.0,
+      "oracle_MAE": 7.624682426452637,
+      "uniform_budget_idx": 2,
+      "uniform_cost": 54240.0,
+      "uniform_MAE": 13.32970507236357,
+      "oracle_gain_pct": 42.79931637601747,
+      "escalation_rate": 0.887905604719764
+    },
+    {
+      "budget_nfe": 171064.61538461538,
+      "budget_per_gap": 126.15384615384615,
+      "oracle_cost": 161975.0,
+      "oracle_MAE": 7.596767425537109,
+      "uniform_budget_idx": 2,
+      "uniform_cost": 54240.0,
+      "uniform_MAE": 13.32970507236357,
+      "oracle_gain_pct": 43.00873587002716,
+      "escalation_rate": 0.9033923303834809
+    },
+    {
+      "budget_nfe": 203921.53846153847,
+      "budget_per_gap": 150.3846153846154,
+      "oracle_cost": 161975.0,
+      "oracle_MAE": 7.596767425537109,
+      "uniform_budget_idx": 2,
+      "uniform_cost": 54240.0,
+      "uniform_MAE": 13.32970507236357,
+      "oracle_gain_pct": 43.00873587002716,
+      "escalation_rate": 0.9033923303834809
+    },
+    {
+      "budget_nfe": 236778.46153846156,
+      "budget_per_gap": 174.61538461538464,
+      "oracle_cost": 161975.0,
+      "oracle_MAE": 7.596767425537109,
+      "uniform_budget_idx": 4,
+      "uniform_cost": 216960.0,
+      "uniform_MAE": 12.219931093289086,
+      "oracle_gain_pct": 37.83297657292778,
+      "escalation_rate": 0.9033923303834809
+    },
+    {
+      "budget_nfe": 269635.3846153846,
+      "budget_per_gap": 198.84615384615384,
+      "oracle_cost": 161975.0,
+      "oracle_MAE": 7.596767425537109,
+      "uniform_budget_idx": 4,
+      "uniform_cost": 216960.0,
+      "uniform_MAE": 12.219931093289086,
+      "oracle_gain_pct": 37.83297657292778,
+      "escalation_rate": 0.9033923303834809
+    },
+    {
+      "budget_nfe": 302492.3076923077,
+      "budget_per_gap": 223.07692307692307,
+      "oracle_cost": 161975.0,
+      "oracle_MAE": 7.596767425537109,
+      "uniform_budget_idx": 4,
+      "uniform_cost": 216960.0,
+      "uniform_MAE": 12.219931093289086,
+      "oracle_gain_pct": 37.83297657292778,
+      "escalation_rate": 0.9033923303834809
+    },
+    {
+      "budget_nfe": 335349.23076923075,
+      "budget_per_gap": 247.3076923076923,
+      "oracle_cost": 161975.0,
+      "oracle_MAE": 7.596767425537109,
+      "uniform_budget_idx": 4,
+      "uniform_cost": 216960.0,
+      "uniform_MAE": 12.219931093289086,
+      "oracle_gain_pct": 37.83297657292778,
+      "escalation_rate": 0.9033923303834809
+    },
+    {
+      "budget_nfe": 368206.1538461539,
+      "budget_per_gap": 271.53846153846155,
+      "oracle_cost": 161975.0,
+      "oracle_MAE": 7.596767425537109,
+      "uniform_budget_idx": 4,
+      "uniform_cost": 216960.0,
+      "uniform_MAE": 12.219931093289086,
+      "oracle_gain_pct": 37.83297657292778,
+      "escalation_rate": 0.9033923303834809
+    },
+    {
+      "budget_nfe": 401063.07692307694,
+      "budget_per_gap": 295.7692307692308,
+      "oracle_cost": 161975.0,
+      "oracle_MAE": 7.596767425537109,
+      "uniform_budget_idx": 4,
+      "uniform_cost": 216960.0,
+      "uniform_MAE": 12.219931093289086,
+      "oracle_gain_pct": 37.83297657292778,
+      "escalation_rate": 0.9033923303834809
+    },
+    {
+      "budget_nfe": 433920.0,
+      "budget_per_gap": 320.0,
+      "oracle_cost": 161975.0,
+      "oracle_MAE": 7.596767425537109,
+      "uniform_budget_idx": 5,
+      "uniform_cost": 433920.0,
+      "uniform_MAE": 11.992425159015486,
+      "oracle_gain_pct": 36.6536182231154,
+      "escalation_rate": 0.9033923303834809
+    }
+  ],
+  "router_rows": [
+    {
+      "budget_per_gap": 5.0,
+      "uniform_MAE": 34.60526133849557,
+      "router_MAE": 34.605262756347656,
+      "oracle_MAE": 34.605262756347656,
+      "router_gain_pct": -4.097215359778344e-06,
+      "oracle_gain_pct": -4.097215359778344e-06,
+      "router_cost": 6780.0,
+      "escalation_rate": 0.0
+    },
+    {
+      "budget_per_gap": 29.23076923076923,
+      "uniform_MAE": 18.34112134725295,
+      "router_MAE": 16.944787979125977,
+      "oracle_MAE": 9.273236274719238,
+      "router_gain_pct": 7.613129762843594,
+      "oracle_gain_pct": 49.440189074872784,
+      "router_cost": 39360.0,
+      "escalation_rate": 0.49557522123893805
+    },
+    {
+      "budget_per_gap": 53.46153846153846,
+      "uniform_MAE": 13.32970507236357,
+      "router_MAE": 16.41466522216797,
+      "oracle_MAE": 8.153986930847168,
+      "router_gain_pct": -23.143498922571332,
+      "oracle_gain_pct": 38.82845204315285,
+      "router_cost": 72455.0,
+      "escalation_rate": 0.5641592920353983
+    },
+    {
+      "budget_per_gap": 77.6923076923077,
+      "uniform_MAE": 13.32970507236357,
+      "router_MAE": 16.14573097229004,
+      "oracle_MAE": 7.773202896118164,
+      "router_gain_pct": -21.125943032039963,
+      "oracle_gain_pct": 41.68510965606945,
+      "router_cost": 105295.0,
+      "escalation_rate": 0.5936578171091446
+    },
+    {
+      "budget_per_gap": 101.92307692307692,
+      "uniform_MAE": 13.32970507236357,
+      "router_MAE": 16.12181282043457,
+      "oracle_MAE": 7.624682426452637,
+      "router_gain_pct": -20.94650806535748,
+      "oracle_gain_pct": 42.79931637601747,
+      "router_cost": 112825.0,
+      "escalation_rate": 0.6039823008849557
+    },
+    {
+      "budget_per_gap": 126.15384615384615,
+      "uniform_MAE": 13.32970507236357,
+      "router_MAE": 16.12181282043457,
+      "oracle_MAE": 7.596767425537109,
+      "router_gain_pct": -20.94650806535748,
+      "oracle_gain_pct": 43.00873587002716,
+      "router_cost": 112825.0,
+      "escalation_rate": 0.6039823008849557
+    },
+    {
+      "budget_per_gap": 150.3846153846154,
+      "uniform_MAE": 13.32970507236357,
+      "router_MAE": 16.12181282043457,
+      "oracle_MAE": 7.596767425537109,
+      "router_gain_pct": -20.94650806535748,
+      "oracle_gain_pct": 43.00873587002716,
+      "router_cost": 112825.0,
+      "escalation_rate": 0.6039823008849557
+    },
+    {
+      "budget_per_gap": 174.61538461538464,
+      "uniform_MAE": 12.219931093289086,
+      "router_MAE": 16.12181282043457,
+      "oracle_MAE": 7.596767425537109,
+      "router_gain_pct": -31.930472417216095,
+      "oracle_gain_pct": 37.83297657292778,
+      "router_cost": 112825.0,
+      "escalation_rate": 0.6039823008849557
+    },
+    {
+      "budget_per_gap": 198.84615384615384,
+      "uniform_MAE": 12.219931093289086,
+      "router_MAE": 16.12181282043457,
+      "oracle_MAE": 7.596767425537109,
+      "router_gain_pct": -31.930472417216095,
+      "oracle_gain_pct": 37.83297657292778,
+      "router_cost": 112825.0,
+      "escalation_rate": 0.6039823008849557
+    },
+    {
+      "budget_per_gap": 223.07692307692307,
+      "uniform_MAE": 12.219931093289086,
+      "router_MAE": 16.12181282043457,
+      "oracle_MAE": 7.596767425537109,
+      "router_gain_pct": -31.930472417216095,
+      "oracle_gain_pct": 37.83297657292778,
+      "router_cost": 112825.0,
+      "escalation_rate": 0.6039823008849557
+    },
+    {
+      "budget_per_gap": 247.3076923076923,
+      "uniform_MAE": 12.219931093289086,
+      "router_MAE": 16.12181282043457,
+      "oracle_MAE": 7.596767425537109,
+      "router_gain_pct": -31.930472417216095,
+      "oracle_gain_pct": 37.83297657292778,
+      "router_cost": 112825.0,
+      "escalation_rate": 0.6039823008849557
+    },
+    {
+      "budget_per_gap": 271.53846153846155,
+      "uniform_MAE": 12.219931093289086,
+      "router_MAE": 16.12181282043457,
+      "oracle_MAE": 7.596767425537109,
+      "router_gain_pct": -31.930472417216095,
+      "oracle_gain_pct": 37.83297657292778,
+      "router_cost": 112825.0,
+      "escalation_rate": 0.6039823008849557
+    },
+    {
+      "budget_per_gap": 295.7692307692308,
+      "uniform_MAE": 12.219931093289086,
+      "router_MAE": 16.12181282043457,
+      "oracle_MAE": 7.596767425537109,
+      "router_gain_pct": -31.930472417216095,
+      "oracle_gain_pct": 37.83297657292778,
+      "router_cost": 112825.0,
+      "escalation_rate": 0.6039823008849557
+    },
+    {
+      "budget_per_gap": 320.0,
+      "uniform_MAE": 11.992425159015486,
+      "router_MAE": 16.12181282043457,
+      "oracle_MAE": 7.596767425537109,
+      "router_gain_pct": -34.4332994091254,
+      "oracle_gain_pct": 36.6536182231154,
+      "router_cost": 112825.0,
+      "escalation_rate": 0.6039823008849557
+    }
+  ],
+  "r2": [
+    NaN,
+    -0.09804762376456866,
+    -0.0844391646977678,
+    -0.0799579446337817,
+    -0.08764460677401953,
+    -0.08648556991882494
+  ],
+  "feature_importance": {
+    "pre_post_jump": 605.8,
+    "window_missing_rate": 509.2,
+    "station_missing_rate": 449.2,
+    "station_observed_mean": 423.2,
+    "neighbour_disagreement": 383.0,
+    "post_mean": 369.0,
+    "neighbour_vs_station": 333.0,
+    "station_observed_std": 310.0,
+    "neighbour_mean": 304.2,
+    "gap_rel_pos": 271.6,
+    "pre_mean": 184.2,
+    "neighbour_availability": 46.6,
+    "gap_length": 7.0,
+    "n_neighbours": 2.2,
+    "gap_at_edge": 1.4,
+    "has_pre": 0.4,
+    "has_post": 0.0
+  }
+}

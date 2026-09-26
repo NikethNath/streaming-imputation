@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "uniform_cheap (10x4, 40 nfe)": {
+      "nfe": 40.0,
+      "MAE": 15.295488357543945,
+      "worst_decile_MAE": 23.995851516723633,
+      "error_gini": 0.1660094569688182,
+      "slope": 36.75602445123938,
+      "band_misclassification": 0.372,
+      "max_min_gap": 20.14951515197754
+    },
+    "uniform_rich (20x16, 320 nfe)": {
+      "nfe": 320.0,
+      "MAE": 13.464911460876465,
+      "worst_decile_MAE": 21.302687168121338,
+      "error_gini": 0.15564702041295653,
+      "slope": 32.08554376266041,
+      "band_misclassification": 0.32727272727272727,
+      "max_min_gap": 18.952356338500977
+    },
+    "equity_mix (126 nfe avg)": {
+      "nfe": 125.55555555555557,
+      "MAE": 14.763538360595703,
+      "worst_decile_MAE": 22.440544605255127,
+      "error_gini": 0.15541883285272418,
+      "slope": 33.07777146867967,
+      "band_misclassification": 0.35963636363636364,
+      "max_min_gap": 17.04265785217285
+    }
+  },
+  "worst_stations": [
+    "001001",
+    "001003",
+    "001019",
+    "001025",
+    "001027",
+    "001029",
+    "001030",
+    "001031",
+    "001033",
+    "001034",
+    "001036"
+  ],
+  "config": {
+    "config": "config/pipeline.yaml",
+    "n_windows": 16,
+    "mask_rate": 0.15,
+    "cheap": "10x4",
+    "rich": "20x16",
+    "worst_frac": 0.3
+  }
+}

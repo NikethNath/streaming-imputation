@@ -21,7 +21,8 @@ import numpy as np
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from models.data import load_ground_truth, Standardiser, split_by_month, to_windows  # noqa: E402
+from models.data import (load_ground_truth, Standardiser, split_by_month,     # noqa: E402
+                         to_windows, load_stations, geographic_adjacency)
 from models.baseline import CSDIBaseline, nfe_per_window                              # noqa: E402
 from stream.windower import SlidingWindow                                             # noqa: E402
 from stream.sinks import InfluxSink, ConsoleSink                                       # noqa: E402
@@ -46,6 +47,17 @@ def main():
     ap.add_argument("--max-windows", type=int, default=None)
     ap.add_argument("--sink", choices=["influx", "console"], default="influx")
     ap.add_argument("--from-beginning", action="store_true")
+    ap.add_argument("--router", action="store_true",
+                    help="enable budget allocation in the serving path")
+    ap.add_argument("--router-mode", default="equity", choices=["equity", "gain"],
+                    help="equity = station-tiered (shipped); gain = per-gap "
+                         "triage, kept to reproduce the negative result")
+    ap.add_argument("--router-model", default="results/router.pkl",
+                    help="gain-mode model bundle")
+    ap.add_argument("--nfe-budget", type=float, default=2000,
+                    help="network function evaluations allowed per window")
+    ap.add_argument("--no-equity", action="store_true",
+                    help="disable the equity reservation (ablation)")
     args = ap.parse_args()
 
     cfg = yaml.safe_load(open(args.config))
@@ -59,6 +71,15 @@ def main():
     model = CSDIBaseline(n_steps=win, n_features=len(stations),
                          device=cfg["model"]["device"], epochs=1, patience=None)
     model.load(cfg["model"]["checkpoint"])
+
+    router = None
+    if args.router:
+        from router.runtime import GapRouter
+        adj = geographic_adjacency(load_stations(cfg["data"]["latlng"]))
+        model_path = args.router_model if args.router_mode == "gain" else None
+        router = GapRouter(model_path, adj, mode=args.router_mode)
+        print(f"[consumer] router enabled mode={args.router_mode} "
+              f"equity={'off' if args.no_equity else 'on'}")
 
     if args.sink == "influx":
         sink = InfluxSink(cfg["influx"]["url"], cfg["influx"]["token"],
@@ -91,12 +112,27 @@ def main():
             continue
 
         X = snap["X"][None, ...]                       # (1, win, n_stations)
+        Xs = scaler.transform(X)
         t0 = time.perf_counter()
-        point_s, samples_s = model.impute(scaler.transform(X), n_samples=n_samples)
-        latency_ms = (time.perf_counter() - t0) * 1000
+        if router is not None:
+            imputed_s, info = router.impute_window(
+                model, Xs[0], args.nfe_budget, use_equity=not args.no_equity)
+            latency_ms = (time.perf_counter() - t0) * 1000
+            imputed = scaler.inverse(imputed_s)
+            # Uncertainty band still needs samples; draw a small set at the
+            # cheapest routed budget so the dashboard stays informative.
+            from models import sampler as _s
+            smp, band_nfe = _s.sample(model, Xs, n_steps=10, n_samples=8, mode="ddim")
+            samples = scaler.inverse(smp)[:, 0]
+            nfe_used = info["nfe_used"] + band_nfe
+        else:
+            point_s, samples_s = model.impute(Xs, n_samples=n_samples)
+            latency_ms = (time.perf_counter() - t0) * 1000
+            imputed = scaler.inverse(point_s)[0]
+            samples = scaler.inverse(samples_s)[:, 0]
+            info = {}
+            nfe_used = nfe_per_window(model.params["n_diffusion_steps"], n_samples)
 
-        imputed = scaler.inverse(point_s)[0]
-        samples = scaler.inverse(samples_s)[:, 0]
         lo = np.quantile(samples, 0.05, axis=0)
         hi = np.quantile(samples, 0.95, axis=0)
 
@@ -106,22 +142,33 @@ def main():
         em = snap["eval_mask"] & ~np.isnan(snap["truth"])
         fields = {
             "latency_ms": latency_ms,
-            "nfe_per_window": float(nfe_per_window(
-                model.params["n_diffusion_steps"], n_samples)),
+            "nfe_per_window": float(nfe_used),
             "n_missing_cells": float(np.isnan(snap["X"]).sum()),
             "n_scoreable_cells": float(em.sum()),
         }
+        for k in ("n_gaps", "escalation_rate", "n_priority_gaps",
+                  "n_promoted_stations"):
+            if k in info:
+                fields[k] = float(info[k])
         if em.any():
             fields["window_mae"] = metrics.mae(imputed, snap["truth"], em)
             fields["window_crps"] = metrics.crps(samples, snap["truth"], em)
+            if router is not None:
+                # feed per-station error back so the equity reservation adapts
+                ps = metrics.per_station(imputed, snap["truth"], em,
+                                         list(range(len(stations))))
+                router.observe_errors(ps)
         sink.write_telemetry(snap["timestamps"][-1], fields,
-                             tags={"model": "csdi-baseline"})
+                             tags={"model": "csdi-router" if router else "csdi-baseline"})
 
         n_done += 1
         mae_txt = f"{fields.get('window_mae', float('nan')):.2f}"
+        extra = (f" nfe={nfe_used} promoted={info.get('n_promoted_stations', '-')}"
+                 f" escal={info.get('escalation_rate',0)*100:.0f}%"
+                 if router is not None else f" nfe={nfe_used}")
         print(f"[consumer] window {n_done} @ {snap['timestamps'][-1]} "
               f"latency={latency_ms:.0f}ms mae={mae_txt} "
-              f"missing={int(fields['n_missing_cells'])}", flush=True)
+              f"missing={int(fields['n_missing_cells'])}{extra}", flush=True)
 
         if args.max_windows and n_done >= args.max_windows:
             break
