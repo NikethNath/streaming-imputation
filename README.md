@@ -254,17 +254,89 @@ At CSDI's own defaults the baseline needs **565 seconds per window** on CPU at
 1,000 evaluations per window. That number is the entire motivation for the
 Phase 2 router.
 
+## Phase 2 results: budget allocation
+
+### A free 2.5x saving (positive)
+
+Sweeping diffusion steps against posterior samples, **the cost-accuracy frontier
+never uses 50 steps**:
+
+| steps x samples | NFE | MAE | CRPS |
+|---|---|---|---|
+| 20 x 16 | **320** | **12.95** | 0.1867 |
+| 50 x 16 | 800 | 13.09 | 0.1891 |
+
+Better accuracy for 2.5x less compute, with no adaptivity at all. At matched
+cost the sample axis also buys more than the step axis: 20x8 (160 NFE, MAE
+13.36) beats 50x4 (200 NFE, MAE 13.74).
+
+### Per-gap triage does not work (negative, and we show why)
+
+An oracle allocator appears to beat the best uniform budget by **49%**. That
+headroom is an artefact of the sampler's own randomness.
+
+| quantity | test-retest correlation across two runs |
+|---|---|
+| per-gap **error** | **+0.76 … +0.91** — difficulty is real structure |
+| per-gap **gain** | **+0.015** — what a router must predict, and it is noise |
+
+Allocating on one run and scoring on an **independent** run turns the oracle's
++32.5% into **-7.2%**, i.e. worse than not adapting. Learned routers confirm it:
+held-out R2 on gain is negative at every budget.
+
+**If you are building an adaptive-compute router over a stochastic model, run
+this two-run check before you trust an oracle bound.** It costs two sampling
+passes: correlate per-item error across runs, correlate per-item *gain* across
+runs, and score the oracle's allocation on the held-out run.
+
+### Equity allocation works (positive)
+
+Station-level error *is* reliable, so the lever moves up a level — the
+worst-served 30% of stations get the expensive budget, the rest the cheap one:
+
+| variant | NFE | MAE | worst-10% | **Gini** |
+|---|---|---|---|---|
+| uniform cheap (10x4) | 40 | 15.30 | 24.00 | 0.166 |
+| uniform rich (20x16) | 320 | 13.46 | 21.30 | 0.156 |
+| **equity mix** | **126** | 14.76 | 22.44 | **0.155** |
+
+The equity mix achieves the **best error Gini of the three at 2.5x less compute
+than uniform-rich**, capturing ~58% of the worst-decile improvement for 31% of
+the added cost.
+
+Live in the pipeline: **217 NFE/window vs the baseline's 400**, with stations
+promoted online as the deficit tracker observes error.
+
+## Reproducing the results
+
+```bash
+./scripts/demo.sh                       # full end-to-end demo, <10 min
+
+python scripts/budget_sweep.py          # the (steps, samples) frontier
+python scripts/build_delta_dataset.py   # per-gap errors at each budget
+python router/train_router.py           # oracle bound + learned router
+python scripts/gain_reliability.py      # the two-run diagnostic
+python scripts/equity_experiment.py     # station-level allocation
+python scripts/make_figures.py          # report figures
+```
+
+## Report
+
+`report/main.tex` builds a 6-page IEEE two-column paper
+(`pdflatex main.tex` twice). Both the PDF and the editable source are tracked.
+
 ## Status
 
-- [x] Ingestion, storage and dashboard layer running
-- [x] Kafka → window → CSDI → InfluxDB → Grafana loop closed
+- [x] Ingestion, storage and dashboard layer
+- [x] Kafka -> window -> CSDI -> InfluxDB -> Grafana loop closed
 - [x] CSDI baseline trained and scored against the published result
-- [x] Metrics and equity-audit modules, with a reportable finding
+- [x] Metrics and equity audit
 - [x] Spark Structured Streaming path verified against Kafka
+- [x] Budget-controllable sampler, validated against the reference
+- [x] Per-gap router + oracle bound + reliability diagnostic
+- [x] Station-level equity allocation, live in the serving path
+- [x] IEEE report and figures
 - [x] `scripts/verify_gate.py` — 9/9 checks passing
-- [ ] Full-quality baseline training run (`scripts/train_overnight.sh`)
-- [ ] Gap-level compute triage over (steps, samples)
-- [ ] Equity-aware budget reservation
 
 ## Tool versions
 

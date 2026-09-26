@@ -22,3 +22,7 @@ data/pm25/
 .spark-checkpoint/
 results/*.npz
 results/*.pkl
+report/*.aux
+report/*.log
+report/*.out
+report/*.png
