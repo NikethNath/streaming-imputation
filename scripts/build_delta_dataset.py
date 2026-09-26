@@ -40,6 +40,8 @@ def main():
     ap.add_argument("--budgets", default="2x1,5x2,10x4,20x8,50x16",
                     help="comma separated steps x samples")
     ap.add_argument("--out", default="results/delta_dataset.npz")
+    ap.add_argument("--crn-seed", type=int, default=None,
+                    help="fix the initial latent across budgets (common random numbers)")
     args = ap.parse_args()
 
     budgets = []
@@ -76,7 +78,8 @@ def main():
     preds = {}
     for (S, N) in budgets:
         t0 = time.perf_counter()
-        smp, _ = sampler.sample(model, corrupt, n_steps=S, n_samples=N, mode="ddim")
+        smp, _ = sampler.sample(model, corrupt, n_steps=S, n_samples=N, mode="ddim",
+                                crn_seed=args.crn_seed)
         preds[(S, N)] = scaler.inverse(sampler.point_estimate(smp))
         print(f"  budget {S}x{N} done in {time.perf_counter()-t0:.0f}s", flush=True)
 

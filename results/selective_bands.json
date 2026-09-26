@@ -1,0 +1,78 @@
+{
+  "budget": "20x8",
+  "n_cells": 3427,
+  "base_band_misclassification": 0.3300262620367668,
+  "base_MAE": 13.660290718078613,
+  "rows": [
+    {
+      "coverage": 1.0,
+      "band_predicted_error": 0.3300262620367668,
+      "mae_predicted_error": 13.660290718078613,
+      "band_posterior_band_risk": 0.3300262620367668,
+      "mae_posterior_band_risk": 13.660290718078613,
+      "band_oracle_band": 0.3300262620367668,
+      "mae_oracle_band": 13.660289764404297,
+      "band_reduction_pct": 0.0
+    },
+    {
+      "coverage": 0.95,
+      "band_predicted_error": 0.32678132678132676,
+      "mae_predicted_error": 12.599345207214355,
+      "band_posterior_band_risk": 0.3108108108108108,
+      "mae_posterior_band_risk": 13.014922142028809,
+      "band_oracle_band": 0.29484029484029484,
+      "mae_oracle_band": 13.426515579223633,
+      "band_reduction_pct": 5.822400649986853
+    },
+    {
+      "coverage": 0.9,
+      "band_predicted_error": 0.3229571984435798,
+      "mae_predicted_error": 11.861092567443848,
+      "band_posterior_band_risk": 0.29636835278858625,
+      "mae_posterior_band_risk": 12.713675498962402,
+      "band_oracle_band": 0.25551232166018156,
+      "mae_oracle_band": 13.256991386413574,
+      "band_reduction_pct": 10.198554818171072
+    },
+    {
+      "coverage": 0.8,
+      "band_predicted_error": 0.31801604668125455,
+      "mae_predicted_error": 10.591691017150879,
+      "band_posterior_band_risk": 0.2713347921225383,
+      "mae_posterior_band_risk": 12.2774658203125,
+      "band_oracle_band": 0.162654996353027,
+      "mae_oracle_band": 12.698246955871582,
+      "band_reduction_pct": 17.78387863802486
+    },
+    {
+      "coverage": 0.7,
+      "band_predicted_error": 0.3155481450604419,
+      "mae_predicted_error": 9.349616050720215,
+      "band_posterior_band_risk": 0.25260525218841184,
+      "mae_posterior_band_risk": 12.110962867736816,
+      "band_oracle_band": 0.042934556065027094,
+      "mae_oracle_band": 10.493437767028809,
+      "band_reduction_pct": 23.459045159178828
+    },
+    {
+      "coverage": 0.6,
+      "band_predicted_error": 0.30739299610894943,
+      "mae_predicted_error": 8.49824047088623,
+      "band_posterior_band_risk": 0.2237354085603113,
+      "mae_posterior_band_risk": 11.76821231842041,
+      "band_oracle_band": 0.0,
+      "mae_oracle_band": 9.134360313415527,
+      "band_reduction_pct": 32.20678646010726
+    },
+    {
+      "coverage": 0.5,
+      "band_predicted_error": 0.3115519253208868,
+      "mae_predicted_error": 7.5622663497924805,
+      "band_posterior_band_risk": 0.2001166861143524,
+      "mae_posterior_band_risk": 11.257543563842773,
+      "band_oracle_band": 0.0,
+      "mae_oracle_band": 8.524818420410156,
+      "band_reduction_pct": 39.363405542538835
+    }
+  ]
+}

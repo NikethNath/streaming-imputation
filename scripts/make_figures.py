@@ -91,6 +91,36 @@ ax.set_title("Error concentrates where data is scarce", fontsize=8)
 ax.legend(fontsize=6)
 fig.savefig(OUT / "equity_scatter.pdf"); plt.close(fig)
 
+# ---------------------------------------------------------------- Fig 6
+sb = json.load(open("results/selective_bands.json"))
+si = json.load(open("results/selective_imputation.json"))
+rows = sb["rows"]
+cov = [r["coverage"] * 100 for r in rows]
+fig, axes = plt.subplots(1, 2, figsize=(7.0, 2.4))
+axes[0].plot(cov, [r["band_predicted_error"] * 100 for r in rows],
+             marker="s", ms=3, lw=1.1, label="rank by predicted error")
+axes[0].plot(cov, [r["band_posterior_band_risk"] * 100 for r in rows],
+             marker="o", ms=3, lw=1.3, label="rank by posterior band risk")
+axes[0].plot(cov, [r["band_oracle_band"] * 100 for r in rows],
+             marker="^", ms=3, lw=1.0, ls="--", color="grey", label="oracle")
+axes[0].set_xlabel("coverage: % of gaps published")
+axes[0].set_ylabel("AQI band misclassification (%)")
+axes[0].set_title("Decision-aware abstention", fontsize=8)
+axes[0].legend(fontsize=6); axes[0].invert_xaxis()
+
+srows = si["rows"]
+scov = [r["coverage"] * 100 for r in srows]
+axes[1].plot(scov, [r["model_MAE"] for r in srows], marker="o", ms=3, lw=1.3,
+             label="learned error model")
+axes[1].plot(scov, [r["oracle_MAE"] for r in srows], marker="^", ms=3, lw=1.0,
+             ls="--", color="grey", label="oracle")
+axes[1].axhline(si["base_MAE"], color="k", lw=0.8, ls=":", label="impute everything")
+axes[1].set_xlabel("coverage: % of gaps published")
+axes[1].set_ylabel(r"MAE among published ($\mu$g/m$^3$)")
+axes[1].set_title("Risk-coverage for error", fontsize=8)
+axes[1].legend(fontsize=6); axes[1].invert_xaxis()
+fig.savefig(OUT / "selective.pdf"); plt.close(fig)
+
 print("figures written to", OUT)
 for f in sorted(OUT.glob("*.pdf")):
     print("  ", f.name, f.stat().st_size, "bytes")

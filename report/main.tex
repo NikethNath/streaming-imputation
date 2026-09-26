@@ -36,8 +36,11 @@ the best uniform budget by 49\%, but this headroom is an artefact. Per-gap
 \emph{error} is highly reproducible across independent sampling runs
 ($r=0.76$--$0.91$), whereas per-gap \emph{gain} --- the quantity any router must
 predict --- has $r\approx0.015$. Allocating on one run and scoring on an
-independent run turns the oracle's $+32\%$ advantage into $-7\%$. Third, moving
-the lever from gaps to stations works: station-level error is reliable and
+independent run turns the oracle's $+32\%$ advantage into $-7\%$. Third, the same asymmetry pays off elsewhere: per-gap error \emph{is}
+predictable, and abstaining on the gaps whose posterior disagrees about the
+public-health band cuts band misclassification from 33.0\% to 27.1\% at 80\%
+coverage, where abstaining on predicted error magnitude does not move it.
+Fourth, moving the lever from gaps to stations works: station-level error is reliable and
 concentrates on the stations with the most missing data ($r=+0.59$), and
 promoting the worst-served 30\% of stations achieves a better error Gini at 126
 evaluations than giving every station 320.
@@ -95,6 +98,10 @@ a 2.5$\times$ compute saving at better accuracy (Sec.~\ref{sec:results}).
 \item A rigorous negative result for per-gap adaptive compute, with a
 test-retest protocol that shows why oracle bounds in this setting are
 misleading (Sec.~\ref{sec:results}).
+\item \emph{Decision-aware selective imputation}: abstaining on gaps whose
+posterior disagrees about the AQI band cuts band misclassification by 18\% at
+80\% coverage, where abstaining on predicted error magnitude does not. This is
+the one result that requires a generative imputer (Sec.~\ref{sec:results}).
 \item An equity audit of the baseline and a station-level allocation that
 improves error dispersion per unit compute (Sec.~\ref{sec:results}).
 \end{itemize}
@@ -439,6 +446,72 @@ predicting gain, which is what an adaptive router actually needs; and
 zero, no router can succeed and a self-scored oracle will nonetheless promise
 large gains.
 
+\subsection{Selective imputation: the asymmetry pays off elsewhere}
+
+The failure above is specific. Gain is unpredictable, but per-gap \emph{error}
+is not: the same features reach held-out $R^2=+0.214$ and rank correlation
+$+0.403$ when the target is the error itself. That asymmetry closes the door on
+adaptive compute and opens a different one. If we can tell which imputations
+will be poor, the system can decline to publish them --- and for an alerting
+service a missing value is more honest than a confidently wrong one.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/selective.pdf}
+\caption{Left: AQI band misclassification among published values as coverage
+falls. Ranking by predicted error magnitude barely helps; ranking by posterior
+band risk does. Right: risk--coverage for absolute error.}
+\label{fig:selective}
+\end{figure*}
+
+Fig.~\ref{fig:selective} (right) shows the risk--coverage trade-off. Withholding
+the 20\% of gaps with the highest predicted error cuts MAE among the published
+80\% from 12.22 to 9.70, a 20.6\% reduction, capturing 51\% of the reduction an
+oracle could achieve.
+
+\textbf{Ranking by error is the wrong criterion for decisions.} Band
+misclassification barely moves under that ranking: 33.0\% at full coverage to
+31.8\% at 80\%. The reason is structural. A band flip is caused by proximity to
+a threshold, not by the magnitude of the error --- a $2\,\mu$g/m$^3$ error at
+the 35.4 boundary changes the public-health category, while a
+$20\,\mu$g/m$^3$ error mid-band does not.
+
+\textbf{The posterior gives the right criterion directly.} For each imputed
+cell we compute the fraction of posterior samples falling in a different AQI
+band than the published median,
+\begin{equation}
+\rho_{i} = \tfrac{1}{N}\textstyle\sum_{j=1}^{N}
+\mathbf{1}\!\left[\mathrm{band}(x_i^{(j)}) \neq \mathrm{band}(\hat{x}_i)\right],
+\end{equation}
+a calibration-free estimate of decision risk that costs nothing extra because
+the samples are already drawn. Ranking by $\rho$ rather than by predicted error
+cuts band misclassification from 33.0\% to 27.1\% at 80\% coverage and to
+20.0\% at 50\% (Table~\ref{tab:selective}) --- relative reductions of 18\% and
+39\%, against essentially no movement from the error-based ranking.
+
+\begin{table}[t]
+\caption{Band misclassification among published values. Lower is better.}
+\label{tab:selective}
+\centering\scriptsize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{rrrr}
+\toprule
+Coverage & by predicted error & by posterior band risk & oracle \\
+\midrule
+100\% & 33.0\% & 33.0\% & 33.0\% \\
+90\%  & 32.3\% & 29.6\% & 25.6\% \\
+80\%  & 31.8\% & \textbf{27.1\%} & 16.3\% \\
+50\%  & 31.2\% & \textbf{20.0\%} & 0.0\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+This is the one place in our study where a \emph{generative} imputer is
+decisive. SAITS returns a point estimate and cannot express band risk at all;
+$\rho$ exists only because the model returns a posterior. It is also our answer
+to what diffusion buys over a cheaper deterministic imputer, which our own cost
+measurements otherwise make hard to justify.
+
 \subsection{Equity}
 
 \begin{figure}[t]
@@ -497,6 +570,14 @@ router. The distinction that matters is between predicting which inputs are
 \emph{hard} (reproducible here, $r\approx0.9$) and which inputs \emph{benefit}
 from more compute (not reproducible, $r\approx0.015$).
 
+We also tested the obvious remedy. With $\eta=0$ the DDIM trajectory is
+deterministic given the initial latent $x_T$, so fixing $x_T$ across budgets
+(common random numbers) removes sampling noise entirely and makes the gain a
+deterministic function of the input. It does not help: held-out $R^2$ on gain
+falls further, to roughly $-2.0$. The gain is therefore not merely noisy --- it
+depends on the interaction between the realised latent and the individual gap,
+which no feature of the observed context can see.
+
 \textbf{Threats to validity.} Our baseline is deliberately simplified and its
 absolute error is above the published figure; a better-trained model might have
 a different noise-to-signal ratio in the gain, although the reliability gap is
@@ -516,14 +597,20 @@ metrics makes it visible and improvable.
 We built a streaming diffusion imputation pipeline and used it to test per-gap
 adaptive computation. The honest answer is that it does not work on AQI-36, and
 we showed precisely why: the gain from extra compute is not a reproducible
-property of a gap. Two useful results survive. Reducing the chain to 20 steps
-and spending the budget on posterior samples instead is a 2.5$\times$ saving at
-better accuracy. And moving allocation from gaps to stations --- where the
-signal is reliable --- improves the fairness of the imputation per unit compute.
+property of a gap, and fixing the sampler's initial latent across budgets does
+not rescue it.
 
-Future work should test whether gain reliability rises with a better-trained
-model or a deterministic sampler ($\eta=0$ with fixed noise), which would make
-per-gap triage viable again; extend the equity allocation to the spatial model
+Three useful results survive. Reducing the chain to 20 steps and spending the
+budget on posterior samples instead is a 2.5$\times$ saving at better accuracy.
+Because per-gap error is predictable even though gain is not, a selective
+imputer that abstains on high-risk gaps improves the values it does publish ---
+and ranking that abstention by posterior band disagreement rather than by error
+magnitude is what makes it matter for the decision a public-health service
+actually takes. And moving allocation from gaps to stations --- where the
+signal is reliable --- improves the fairness of imputation per unit compute.
+
+Future work should calibrate the abstention threshold against a stated
+alert-precision target rather than a fixed coverage; extend the equity allocation to the spatial model
 of PriSTI; and evaluate on METR-LA, where $N=207$ makes the $O(N^2d)$ attention
 the dominant cost.
 

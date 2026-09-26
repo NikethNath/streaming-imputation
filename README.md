@@ -289,6 +289,42 @@ this two-run check before you trust an oracle bound.** It costs two sampling
 passes: correlate per-item error across runs, correlate per-item *gain* across
 runs, and score the oracle's allocation on the held-out run.
 
+### Selective imputation: knowing what not to publish (positive)
+
+The failed router leaves behind a useful asymmetry. Per-gap **gain** is
+unpredictable, but per-gap **error** is (held-out R2 = +0.214). So instead of
+spending compute where it helps, we decline to publish what we cannot stand
+behind. For an alerting service a missing value is more honest than a
+confidently wrong one.
+
+Withholding the worst-predicted 20% cuts MAE among the published 80% from 12.22
+to **9.70** (-20.6%), capturing 51% of what an oracle could achieve.
+
+But ranking by error magnitude is the **wrong criterion for decisions**. A band
+flip is caused by proximity to a threshold, not by error size: a 2 ug/m3 error
+at the 35.4 boundary changes the public-health category, a 20 ug/m3 error
+mid-band does not. So we rank instead by **posterior band risk** -- the
+fraction of posterior samples landing in a different AQI band than the
+published median:
+
+| coverage | by predicted error | **by posterior band risk** | oracle |
+|---|---|---|---|
+| 100% | 33.0% | 33.0% | 33.0% |
+| 90% | 32.3% | 29.6% | 25.6% |
+| **80%** | 31.8% | **27.1%** | 16.3% |
+| 50% | 31.2% | **20.0%** | 0.0% |
+
+An 18% relative reduction in wrong public-health categories at 80% coverage,
+against essentially nothing from the error-based ranking. It costs no extra
+compute -- the samples are already drawn.
+
+**This is the one result that requires a generative imputer.** SAITS returns a
+point estimate and cannot express band risk at all. It is also the clearest
+answer to what diffusion buys over a cheaper deterministic model.
+
+Live in the pipeline via `--abstain-risk 0.4`, which withholds ~200 high-risk
+cells per window and records `n_withheld` and `mean_band_risk` as telemetry.
+
 ### Equity allocation works (positive)
 
 Station-level error *is* reliable, so the lever moves up a level — the
@@ -317,6 +353,8 @@ python scripts/build_delta_dataset.py   # per-gap errors at each budget
 python router/train_router.py           # oracle bound + learned router
 python scripts/gain_reliability.py      # the two-run diagnostic
 python scripts/equity_experiment.py     # station-level allocation
+python scripts/selective_imputation.py  # risk-coverage for error
+python scripts/selective_bands.py       # decision-aware abstention
 python scripts/make_figures.py          # report figures
 ```
 
@@ -335,6 +373,8 @@ python scripts/make_figures.py          # report figures
 - [x] Budget-controllable sampler, validated against the reference
 - [x] Per-gap router + oracle bound + reliability diagnostic
 - [x] Station-level equity allocation, live in the serving path
+- [x] Common-random-numbers test of the negative result (does not rescue it)
+- [x] Selective imputation with posterior band risk, live in the serving path
 - [x] IEEE report and figures
 - [x] `scripts/verify_gate.py` — 9/9 checks passing
 

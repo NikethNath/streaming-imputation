@@ -58,6 +58,11 @@ def main():
                     help="network function evaluations allowed per window")
     ap.add_argument("--no-equity", action="store_true",
                     help="disable the equity reservation (ablation)")
+    ap.add_argument("--abstain-risk", type=float, default=None,
+                    help="withhold imputed cells whose posterior band risk "
+                         "exceeds this (0-1); e.g. 0.4. Publishing a value the "
+                         "posterior disagrees about can place a station in the "
+                         "wrong public-health band.")
     args = ap.parse_args()
 
     cfg = yaml.safe_load(open(args.config))
@@ -138,15 +143,29 @@ def main():
         lo = np.quantile(samples, 0.05, axis=0)
         hi = np.quantile(samples, 0.95, axis=0)
 
+        # Decision risk: fraction of the posterior landing in a different AQI
+        # band than the value we would publish. Cheap -- the samples exist.
+        from eval.equity import band_of
+        band_risk = (band_of(samples) != band_of(imputed)[None, ...]).mean(axis=0)
+        n_withheld = 0
+        if args.abstain_risk is not None:
+            was_missing = np.isnan(snap["X"])
+            drop = was_missing & (band_risk > args.abstain_risk)
+            n_withheld = int(drop.sum())
+            imputed = np.where(drop, np.nan, imputed)
+
         sink.write_window(snap["timestamps"], stations, snap["X"], imputed,
                           snap["eval_mask"], snap["truth"], lo, hi)
 
-        em = snap["eval_mask"] & ~np.isnan(snap["truth"])
+        em = snap["eval_mask"] & ~np.isnan(snap["truth"]) & ~np.isnan(imputed)
         fields = {
             "latency_ms": latency_ms,
             "nfe_per_window": float(nfe_used),
             "n_missing_cells": float(np.isnan(snap["X"]).sum()),
             "n_scoreable_cells": float(em.sum()),
+            "mean_band_risk": float(band_risk[np.isnan(snap["X"])].mean())
+                              if np.isnan(snap["X"]).any() else 0.0,
+            "n_withheld": float(n_withheld),
         }
         for k in ("n_gaps", "escalation_rate", "n_priority_gaps",
                   "n_promoted_stations"):
@@ -165,9 +184,10 @@ def main():
 
         n_done += 1
         mae_txt = f"{fields.get('window_mae', float('nan')):.2f}"
-        extra = (f" nfe={nfe_used} promoted={info.get('n_promoted_stations', '-')}"
+        extra = (f" nfe={nfe_used} withheld={n_withheld}"
+                 f" promoted={info.get('n_promoted_stations', '-')}"
                  f" escal={info.get('escalation_rate',0)*100:.0f}%"
-                 if router is not None else f" nfe={nfe_used}")
+                 if router is not None else f" nfe={nfe_used} withheld={n_withheld}")
         print(f"[consumer] window {n_done} @ {snap['timestamps'][-1]} "
               f"latency={latency_ms:.0f}ms mae={mae_txt} "
               f"missing={int(fields['n_missing_cells'])}{extra}", flush=True)

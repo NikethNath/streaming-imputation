@@ -49,8 +49,17 @@ def step_schedule(total_steps: int, n_steps: int) -> np.ndarray:
 @torch.no_grad()
 def sample(csdi, X: np.ndarray, n_steps: int | None = None, n_samples: int = 8,
            mode: str = "ddim", eta: float = 0.0, device: str = "cpu",
-           batch_samples: bool = True):
+           batch_samples: bool = True, crn_seed: int | None = None):
     """Draw posterior samples for a batch of windows under a chosen budget.
+
+    `crn_seed` fixes the initial latent x_T (common random numbers). With
+    eta=0 the DDIM trajectory is deterministic given x_T, so a fixed seed makes
+    the whole sampler a deterministic function of the input. That matters
+    because the per-gap *gain* from extra compute is otherwise dominated by the
+    randomness of x_T rather than by any property of the gap -- see
+    scripts/gain_reliability.py. Under common random numbers the same latent is
+    reused across budgets, so differences between budgets reflect the budget
+    alone.
 
     Returns (samples, nfe) where samples has shape
     (n_samples, B, L, K) in the same units as X, with observed cells preserved.
@@ -78,8 +87,12 @@ def sample(csdi, X: np.ndarray, n_steps: int | None = None, n_samples: int = 8,
     obs_r, cond_r, side_r = expand(obs, reps), expand(cond, reps), expand(side, reps)
 
     out = []
-    for _ in range(n_rounds):
-        x = torch.randn(B * reps, K, L, device=device)
+    for _round in range(n_rounds):
+        if crn_seed is not None:
+            g = torch.Generator(device=device).manual_seed(int(crn_seed) + _round)
+            x = torch.randn(B * reps, K, L, device=device, generator=g)
+        else:
+            x = torch.randn(B * reps, K, L, device=device)
         for i in range(len(taus) - 1, -1, -1):
             t = int(taus[i])
             cond_obs = (cond_r * obs_r).unsqueeze(1)
