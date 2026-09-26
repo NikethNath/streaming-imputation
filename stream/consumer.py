@@ -99,8 +99,10 @@ def main():
 
     window = SlidingWindow(stations, win, stride=args.stride)
     n_done = 0
+    budget_txt = (f"router={args.router_mode}" if router is not None
+                  else f"n_samples={n_samples}")
     print(f"[consumer] listening on {cfg['stream']['topic_raw']} "
-          f"(window={win}, stride={args.stride}, n_samples={n_samples})")
+          f"(window={win}, stride={args.stride}, {budget_txt})")
 
     for msg in consumer:
         m = msg.value
