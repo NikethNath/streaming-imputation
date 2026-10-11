@@ -19,6 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from models.data import (load_ground_truth, load_stations, split_by_month,   # noqa: E402
                          to_windows, Standardiser)
 from models.baseline import CSDIBaseline, nfe_per_window                      # noqa: E402
+from models import sampler                                                   # noqa: E402
 from eval import metrics, equity                                              # noqa: E402
 
 
@@ -44,6 +45,13 @@ def main():
                     help="cap the validation set; CSDI validation runs the "
                          "full diffusion sampler, so a large val set "
                          "dominates epoch time")
+    ap.add_argument("--eval-steps", type=int, default=50,
+                    help="reverse steps at evaluation; 50 = CSDI's full chain")
+    ap.add_argument("--eval-chunk", type=int, default=4,
+                    help="windows per sampler pass; bounds memory")
+    ap.add_argument("--checkpoint-out", default=None,
+                    help="where to save the model (default: config checkpoint)")
+    ap.add_argument("--metrics-out", default="results/baseline_metrics.json")
     ap.add_argument("--smoke", action="store_true", help="tiny run to prove the path works")
     args = ap.parse_args()
 
@@ -100,8 +108,28 @@ def main():
     train_secs = time.time() - t0
     print(f"trained in {train_secs:.1f}s")
 
+    # Save before evaluating, so a failure during evaluation cannot cost the
+    # training run -- which may have taken all night.
+    ckpt = args.checkpoint_out or cfg["model"]["checkpoint"]
+    model.save(ckpt)
+    print(f"saved checkpoint -> {ckpt}", flush=True)
+
+    # Evaluate with our batched sampler, not PyPOTS predict(): PyPOTS draws
+    # posterior samples one at a time, and at 50 samples over the test months
+    # that took 12.7 hours. With the full chain we use the ancestral update, so
+    # this is the same procedure CSDI uses, just batched.
     t0 = time.time()
-    point_s, samples_s = model.impute(test_corrupt, n_samples=args.eval_samples)
+    total_steps = model.params["n_diffusion_steps"]
+    mode = "ancestral" if args.eval_steps >= total_steps else "ddim"
+    chunks = []
+    for i in range(0, test_corrupt.shape[0], args.eval_chunk):
+        smp, _ = sampler.sample(model, test_corrupt[i:i + args.eval_chunk],
+                                n_steps=args.eval_steps, n_samples=args.eval_samples,
+                                mode=mode)
+        chunks.append(smp)
+        print(f"  evaluated windows {i + smp.shape[1]}/{test_corrupt.shape[0]}", flush=True)
+    samples_s = np.concatenate(chunks, axis=1)
+    point_s = sampler.point_estimate(samples_s)
     infer_secs = time.time() - t0
 
     # Back to ug/m3 before scoring, so MAE is comparable to published tables.
@@ -121,7 +149,9 @@ def main():
     res["inference_seconds"] = round(infer_secs, 2)
     res["seconds_per_window"] = round(infer_secs / max(n_windows, 1), 3)
     res["nfe_per_window"] = nfe_per_window(
-        model.params["n_diffusion_steps"], args.eval_samples)
+        min(args.eval_steps, total_steps), args.eval_samples)
+    res["eval_steps"] = min(args.eval_steps, total_steps)
+    res["eval_samples"] = args.eval_samples
 
     print("\n=== baseline metrics (ug/m3) ===")
     for k, v in res.items():
@@ -133,11 +163,8 @@ def main():
     out = Path("results"); out.mkdir(exist_ok=True)
     payload = {"metrics": res, "equity": audit, "per_station_MAE": per_station,
                "missing_rate": miss_rate, "config": vars(args)}
-    (out / "baseline_metrics.json").write_text(json.dumps(payload, indent=2))
-    ckpt = cfg["model"]["checkpoint"]
-    model.save(ckpt)
-    print(f"\nsaved checkpoint -> {ckpt}")
-    print(f"saved metrics    -> results/baseline_metrics.json")
+    Path(args.metrics_out).write_text(json.dumps(payload, indent=2))
+    print(f"\nsaved metrics    -> {args.metrics_out}")
 
 
 if __name__ == "__main__":
