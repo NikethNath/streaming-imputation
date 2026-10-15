@@ -1,0 +1,29 @@
+# Central configuration for the streaming imputation pipeline.
+data:
+  ground_truth: data/pm25/SampleData/pm25_ground.txt
+  latlng: data/pm25/SampleData/pm25_latlng.txt
+  n_stations: 36
+  window_len: 36          # timesteps per imputation window (matches CSDI/PriSTI on AQI-36)
+
+stream:
+  kafka_bootstrap: localhost:9092
+  topic_raw: aqi36.raw
+  topic_imputed: aqi36.imputed
+  speedup: 720            # 1 real second == 720 data-seconds (1 h of data per 5 s)
+  missing:
+    point_rate: 0.10      # MCAR dropout on top of the data's genuine gaps
+    block_rate: 0.02      # probability a station enters a burst outage
+    block_len_mean: 6     # mean burst length in timesteps
+    seed: 27
+
+influx:
+  url: http://localhost:8086
+  org: ioe413
+  bucket: aqi36
+  token: team27-dev-token
+
+model:
+  checkpoint: checkpoints/csdi_aqi36_mix.pypots
+  n_diffusion_steps: 50
+  n_sampling_times: 100   # CSDI default; the router varies this per gap in Phase 2
+  device: cuda

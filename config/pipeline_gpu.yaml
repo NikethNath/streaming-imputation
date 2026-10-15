@@ -23,7 +23,7 @@ influx:
   token: team27-dev-token
 
 model:
-  checkpoint: checkpoints/csdi_aqi36.pypots
+  checkpoint: checkpoints/csdi_aqi36_mix.pypots
   n_diffusion_steps: 50
   n_sampling_times: 100   # CSDI default; the router varies this per gap in Phase 2
   device: cuda

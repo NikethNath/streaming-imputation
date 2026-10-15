@@ -2,47 +2,47 @@
   "variants": {
     "uniform_cheap (10x4, 40 nfe)": {
       "nfe": 40.0,
-      "MAE": 15.295488357543945,
-      "worst_decile_MAE": 23.995851516723633,
-      "error_gini": 0.1660094569688182,
-      "slope": 36.75602445123938,
-      "band_misclassification": 0.372,
-      "max_min_gap": 20.14951515197754
+      "MAE": 6.6890153884887695,
+      "worst_decile_MAE": 9.49962329864502,
+      "error_gini": 0.12662816738637472,
+      "slope": 15.160922473605613,
+      "band_misclassification": 0.18145454545454545,
+      "max_min_gap": 6.925414562225342
     },
     "uniform_rich (20x16, 320 nfe)": {
       "nfe": 320.0,
-      "MAE": 13.464911460876465,
-      "worst_decile_MAE": 21.302687168121338,
-      "error_gini": 0.15564702041295653,
-      "slope": 32.08554376266041,
-      "band_misclassification": 0.32727272727272727,
-      "max_min_gap": 18.952356338500977
+      "MAE": 6.490622043609619,
+      "worst_decile_MAE": 9.684773683547974,
+      "error_gini": 0.13661225745529149,
+      "slope": 13.74073175634319,
+      "band_misclassification": 0.17381818181818182,
+      "max_min_gap": 7.44582462310791
     },
     "equity_mix (126 nfe avg)": {
       "nfe": 125.55555555555557,
-      "MAE": 14.763538360595703,
-      "worst_decile_MAE": 22.440544605255127,
-      "error_gini": 0.15541883285272418,
-      "slope": 33.07777146867967,
-      "band_misclassification": 0.35963636363636364,
-      "max_min_gap": 17.04265785217285
+      "MAE": 6.5627875328063965,
+      "worst_decile_MAE": 9.447431325912476,
+      "error_gini": 0.13063545318008551,
+      "slope": 14.385603512191464,
+      "band_misclassification": 0.17672727272727273,
+      "max_min_gap": 6.940732955932617
     }
   },
   "worst_stations": [
     "001001",
     "001003",
+    "001005",
+    "001011",
+    "001016",
     "001019",
     "001025",
-    "001027",
     "001029",
-    "001030",
-    "001031",
     "001033",
-    "001034",
+    "001035",
     "001036"
   ],
   "config": {
-    "config": "config/pipeline.yaml",
+    "config": "config/pipeline_mix.yaml",
     "n_windows": 16,
     "mask_rate": 0.15,
     "cheap": "10x4",
