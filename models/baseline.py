@@ -40,11 +40,20 @@ class CSDIBaseline:
 
     def __init__(self, n_steps: int, n_features: int, device: str = "cpu",
                  epochs: int = 100, batch_size: int = 16, patience: int | None = 10,
-                 saving_path: str = "checkpoints", **overrides):
+                 saving_path: str = "checkpoints", lr: float = 1e-3,
+                 lr_milestones: list[int] | None = None, **overrides):
         from pypots.imputation import CSDI
+        from pypots.optim import Adam
 
         params = dict(CSDI_DEFAULTS)
         params.update(overrides)
+        # CSDI's own recipe decays the learning rate 10x late in training. The
+        # PyPOTS scheduler steps once per optimiser step, so milestones are in
+        # batches, not epochs.
+        scheduler = None
+        if lr_milestones:
+            from pypots.optim.lr_scheduler import MultiStepLR
+            scheduler = MultiStepLR(milestones=lr_milestones, gamma=0.1)
         self.n_steps = n_steps
         self.n_features = n_features
         self.params = params
@@ -57,6 +66,7 @@ class CSDIBaseline:
             device=device,
             saving_path=saving_path,
             model_saving_strategy="best",
+            optimizer=Adam(lr=lr, lr_scheduler=scheduler),
             **params,
         )
 

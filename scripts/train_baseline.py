@@ -52,6 +52,12 @@ def main():
     ap.add_argument("--checkpoint-out", default=None,
                     help="where to save the model (default: config checkpoint)")
     ap.add_argument("--metrics-out", default="results/baseline_metrics.json")
+    ap.add_argument("--target-strategy", default="random", choices=["random", "mix"],
+                    help="training mask: 'mix' adds the dataset's own outage "
+                         "patterns, as CSDI does for AQI-36")
+    ap.add_argument("--lr-decay-epochs", default="",
+                    help="comma-separated epochs at which to cut the LR 10x")
+    ap.add_argument("--patience", type=int, default=10)
     ap.add_argument("--smoke", action="store_true", help="tiny run to prove the path works")
     args = ap.parse_args()
 
@@ -94,13 +100,19 @@ def main():
     # Corrupt the test set so we have scoreable ground truth.
     test_corrupt, eval_mask = mask_for_eval(test_s, args.mask_rate)
 
+    batches_per_epoch = -(-train_s.shape[0] // args.batch_size)
+    milestones = [int(e) * batches_per_epoch
+                  for e in args.lr_decay_epochs.split(",") if e.strip()]
+
     model = CSDIBaseline(
         n_steps=win,
         n_features=len(stations),
         device=cfg["model"]["device"],
         epochs=args.epochs,
         batch_size=args.batch_size,
-        patience=None if args.smoke else 10,
+        patience=None if args.smoke else args.patience,
+        target_strategy=args.target_strategy,
+        lr_milestones=milestones,
     )
 
     t0 = time.time()
