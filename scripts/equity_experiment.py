@@ -71,7 +71,7 @@ def main():
 
     cfg = yaml.safe_load(open(args.config))
     model = CSDIBaseline(n_steps=cfg["data"]["window_len"], n_features=36,
-                         device="cpu", epochs=1, patience=None)
+                         device=cfg["model"]["device"], epochs=1, patience=None)
     model.load(cfg["model"]["checkpoint"])
 
     # --- Stage 1: learn which stations are worst served, on VALIDATION ------

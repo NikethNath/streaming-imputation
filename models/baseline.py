@@ -65,7 +65,7 @@ class CSDIBaseline:
             patience=patience,
             device=device,
             saving_path=saving_path,
-            model_saving_strategy="best",
+            model_saving_strategy="better",   # save on every improvement, so a crash keeps progress
             optimizer=Adam(lr=lr, lr_scheduler=scheduler),
             **params,
         )

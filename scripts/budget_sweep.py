@@ -68,7 +68,7 @@ def main():
 
     rows = []
     model = CSDIBaseline(n_steps=cfg["data"]["window_len"], n_features=len(stations),
-                         device="cpu", epochs=1, patience=None)
+                         device=cfg["model"]["device"], epochs=1, patience=None)
     model.load(cfg["model"]["checkpoint"])
 
     for S in args.steps:

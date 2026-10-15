@@ -26,3 +26,5 @@ report/*.aux
 report/*.log
 report/*.out
 report/*.png
+.pip-tmp/
+.venv-gpu/

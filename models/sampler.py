@@ -48,7 +48,7 @@ def step_schedule(total_steps: int, n_steps: int) -> np.ndarray:
 
 @torch.no_grad()
 def sample(csdi, X: np.ndarray, n_steps: int | None = None, n_samples: int = 8,
-           mode: str = "ddim", eta: float = 0.0, device: str = "cpu",
+           mode: str = "ddim", eta: float = 0.0, device: str | None = None,
            batch_samples: bool = True, crn_seed: int | None = None):
     """Draw posterior samples for a batch of windows under a chosen budget.
 
@@ -67,6 +67,8 @@ def sample(csdi, X: np.ndarray, n_steps: int | None = None, n_samples: int = 8,
     core = csdi.model.model          # _CSDI
     backbone = core.backbone
     core.eval()
+    # Run wherever the model lives, so the same code serves CPU and GPU.
+    device = device or next(core.parameters()).device
 
     total = backbone.n_diffusion_steps
     taus = np.arange(total) if mode == "ancestral" else step_schedule(total, n_steps or total)

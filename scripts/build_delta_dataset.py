@@ -70,7 +70,7 @@ def main():
     truth = scaler.inverse(W)
     print(f"val windows={W.shape[0]}  masked cells={int(hide.sum())}")
 
-    model = CSDIBaseline(n_steps=win, n_features=len(stations), device="cpu",
+    model = CSDIBaseline(n_steps=win, n_features=len(stations), device=cfg["model"]["device"],
                          epochs=1, patience=None)
     model.load(cfg["model"]["checkpoint"])
 

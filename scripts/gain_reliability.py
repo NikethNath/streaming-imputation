@@ -86,7 +86,7 @@ def main():
     corrupt = W.copy(); corrupt[hide] = np.nan
     truth = scaler.inverse(W)
 
-    model = CSDIBaseline(n_steps=win, n_features=len(stations), device="cpu",
+    model = CSDIBaseline(n_steps=win, n_features=len(stations), device=cfg["model"]["device"],
                          epochs=1, patience=None)
     model.load(cfg["model"]["checkpoint"])
 

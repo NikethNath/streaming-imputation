@@ -12,7 +12,15 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 export OMP_NUM_THREADS=14 MKL_NUM_THREADS=14
-PY=.venv/bin/python
+# GPU=1 runs on the AMD GPU through ROCm (about 3x faster to train, 7x to
+# sample). The RX 6700S is not on ROCm's official list, so it needs the
+# standard gfx1030 override; device 0 is the discrete card, not the iGPU.
+if [ "${GPU:-0}" = 1 ]; then
+  PY=.venv-gpu/bin/python; BASE_CFG=config/pipeline_gpu.yaml
+  export HSA_OVERRIDE_GFX_VERSION=10.3.0 HIP_VISIBLE_DEVICES=0
+else
+  PY=.venv/bin/python; BASE_CFG=config/pipeline.yaml
+fi
 CKPT=checkpoints/csdi_aqi36_mix.pypots
 CFG=config/pipeline_mix.yaml
 step() { printf '\n[%s] === %s ===\n' "$(date '+%F %T')" "$1"; }
@@ -23,7 +31,7 @@ cp results/*.json results/*.npz results/*.pkl results/*.log results/v2_full/ 2>/
 cp -r report/figures results/v2_full/figures 2>/dev/null || true
 
 step "training (mix masks, LR decay at 25/40, up to 60 epochs, patience 15)"
-if ! $PY scripts/train_baseline.py --epochs 60 --batch-size 16 --train-stride 1 \
+if ! $PY scripts/train_baseline.py --config "$BASE_CFG" --epochs 60 --batch-size 16 --train-stride 1 \
      --val-windows 16 --eval-steps 50 --eval-samples 50 \
      --target-strategy mix --lr-decay-epochs 25,40 --patience 15 \
      --checkpoint-out "$CKPT" --metrics-out results/baseline_metrics_mix.json; then
@@ -31,7 +39,7 @@ if ! $PY scripts/train_baseline.py --epochs 60 --batch-size 16 --train-stride 1 
 fi
 cp results/baseline_metrics_mix.json results/baseline_metrics.json
 
-sed "s|checkpoint: .*|checkpoint: $CKPT|" config/pipeline.yaml > "$CFG"
+sed "s|checkpoint: .*|checkpoint: $CKPT|" "$BASE_CFG" > "$CFG"
 
 run() { step "$1"; shift; "$@" || echo "!!! step failed, continuing"; }
 run "budget sweep"            $PY scripts/budget_sweep.py --config "$CFG" --n-windows 12
