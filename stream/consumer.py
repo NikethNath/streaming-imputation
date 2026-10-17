@@ -98,7 +98,9 @@ def main():
         bootstrap_servers=cfg["stream"]["kafka_bootstrap"],
         value_deserializer=lambda v: json.loads(v.decode()),
         auto_offset_reset="earliest" if args.from_beginning else "latest",
-        group_id="t27-imputer",
+        # A replay must not join the shared group: its committed offsets would
+        # override auto_offset_reset and the replay would start at the end.
+        group_id=None if args.from_beginning else "t27-imputer",
         consumer_timeout_ms=120_000,
     )
 

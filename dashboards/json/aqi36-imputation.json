@@ -1,47 +1,332 @@
 {
   "uid": "t27-aqi36",
   "title": "Team 27 - AQI-36 Streaming Imputation",
-  "tags": ["ioe413", "team27"],
-  "timezone": "browser",
+  "tags": [
+    "ioe413",
+    "team27"
+  ],
+  "timezone": "utc",
   "schemaVersion": 39,
-  "version": 1,
-  "refresh": "10s",
-  "time": { "from": "2014-04-30T00:00:00Z", "to": "2014-06-01T00:00:00Z" },
+  "version": 2,
+  "refresh": "5s",
+  "time": {
+    "from": "2014-05-01T00:00:00Z",
+    "to": "2014-05-06T00:00:00Z"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "station",
+        "label": "Station",
+        "type": "query",
+        "refresh": 2,
+        "query": "import \"influxdata/influxdb/schema\"\nschema.tagValues(bucket: \"aqi36\", tag: \"station\", start: 2000-01-01T00:00:00Z)",
+        "current": {
+          "text": "001010",
+          "value": "001010"
+        },
+        "sort": 1
+      }
+    ]
+  },
   "panels": [
     {
       "id": 1,
       "type": "timeseries",
-      "title": "PM2.5 - observed vs imputed (all stations)",
-      "gridPos": { "h": 9, "w": 16, "x": 0, "y": 0 },
+      "title": "Station ${station}: observed, imputed and 90% uncertainty band",
+      "gridPos": {
+        "h": 11,
+        "w": 17,
+        "x": 0,
+        "y": 0
+      },
+      "description": "Grey line: readings that arrived. Blue dots: values the model filled in. Shaded band: the model's 90% interval. Orange dots: the true value we hid, for scoring.",
       "fieldConfig": {
-        "defaults": { "unit": "conmgm3", "custom": { "lineWidth": 1, "fillOpacity": 5 } },
-        "overrides": []
+        "defaults": {
+          "unit": "conμgm3",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "observed"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#555555"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "C"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "90% low"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 0
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#7EB2E6"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "D"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "90% high"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 0
+              },
+              {
+                "id": "custom.fillBelowTo",
+                "value": "90% low"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 30
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#7EB2E6"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "B"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "imputed (median)"
+              },
+              {
+                "id": "custom.drawStyle",
+                "value": "points"
+              },
+              {
+                "id": "custom.pointSize",
+                "value": 9
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#1F60C4"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "E"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "hidden true value"
+              },
+              {
+                "id": "custom.drawStyle",
+                "value": "points"
+              },
+              {
+                "id": "custom.pointSize",
+                "value": 7
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FF7F0E"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
       },
       "targets": [
         {
           "refId": "A",
-          "query": "from(bucket: \"aqi36\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"pm25\" and r._field == \"value\")\n  |> group(columns: [\"imputed\"])\n  |> aggregateWindow(every: 1h, fn: mean, createEmpty: false)"
+          "query": "from(bucket: \"aqi36\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"pm25\" and r.station == \"${station}\" and r._field == \"observed\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        },
+        {
+          "refId": "C",
+          "query": "from(bucket: \"aqi36\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"pm25\" and r.station == \"${station}\" and r._field == \"lo90\" and r.imputed == \"true\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        },
+        {
+          "refId": "D",
+          "query": "from(bucket: \"aqi36\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"pm25\" and r.station == \"${station}\" and r._field == \"hi90\" and r.imputed == \"true\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        },
+        {
+          "refId": "B",
+          "query": "from(bucket: \"aqi36\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"pm25\" and r.station == \"${station}\" and r._field == \"value\" and r.imputed == \"true\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        },
+        {
+          "refId": "E",
+          "query": "from(bucket: \"aqi36\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"pm25\" and r.station == \"${station}\" and r._field == \"truth\")\n  |> keep(columns: [\"_time\", \"_value\"])"
         }
       ]
     },
     {
       "id": 2,
       "type": "stat",
-      "title": "Missing cells per window",
-      "gridPos": { "h": 9, "w": 8, "x": 16, "y": 0 },
+      "title": "Pipeline totals (time range)",
+      "gridPos": {
+        "h": 11,
+        "w": 7,
+        "x": 17,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#333333"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "values imputed"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "B"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "held back (band risk)"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#E02F44"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "C"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "windows processed"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "orientation": "horizontal",
+        "textMode": "value_and_name",
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
       "targets": [
         {
           "refId": "A",
-          "query": "from(bucket: \"aqi36\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"imputation_telemetry\" and r._field == \"n_missing_cells\")\n  |> last()"
+          "query": "from(bucket: \"aqi36\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"pm25\" and r._field == \"value\" and r.imputed == \"true\")\n  |> group()\n  |> count()"
+        },
+        {
+          "refId": "B",
+          "query": "from(bucket: \"aqi36\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"imputation_telemetry\" and r._field == \"n_withheld\")\n  |> group()\n  |> sum()"
+        },
+        {
+          "refId": "C",
+          "query": "from(bucket: \"aqi36\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"imputation_telemetry\" and r._field == \"latency_ms\")\n  |> group()\n  |> count()"
         }
       ]
     },
     {
       "id": 3,
       "type": "timeseries",
-      "title": "Per-window inference latency (ms)",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 9 },
-      "fieldConfig": { "defaults": { "unit": "ms" }, "overrides": [] },
+      "title": "Latency per window",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 11
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "displayName": "${__field.labels.engine} ${__field.labels.model}",
+          "custom": {
+            "drawStyle": "points",
+            "pointSize": 8
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
       "targets": [
         {
           "refId": "A",
@@ -52,9 +337,26 @@
     {
       "id": 4,
       "type": "timeseries",
-      "title": "Cost: network function evaluations per window",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 9 },
-      "description": "The hardware-independent cost unit. CSDI defaults to 50 steps x 100 samples = 5000. The Phase 2 router drives this down per gap.",
+      "title": "Cost: network evaluations (NFE) per window",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 11
+      },
+      "description": "NFE = diffusion steps x posterior samples. CSDI's default is 5,000 per window.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "displayName": "${__field.labels.engine} ${__field.labels.model}",
+          "custom": {
+            "drawStyle": "points",
+            "pointSize": 8
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
       "targets": [
         {
           "refId": "A",
@@ -65,25 +367,100 @@
     {
       "id": 5,
       "type": "timeseries",
-      "title": "Accuracy on artificially masked cells (MAE / CRPS)",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 17 },
+      "title": "Error on hidden test cells (MAE per window)",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 11
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "conμgm3",
+          "displayName": "${__field.labels.engine} ${__field.labels.model}",
+          "custom": {
+            "drawStyle": "points",
+            "pointSize": 8
+          }
+        },
+        "overrides": []
+      },
       "targets": [
         {
           "refId": "A",
-          "query": "from(bucket: \"aqi36\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"imputation_telemetry\" and (r._field == \"window_mae\" or r._field == \"window_crps\"))"
+          "query": "from(bucket: \"aqi36\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"imputation_telemetry\" and r._field == \"window_mae\")"
         }
       ]
     },
     {
       "id": 6,
       "type": "barchart",
-      "title": "FAIRNESS: mean absolute error by station",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 17 },
-      "description": "The panel none of the three base papers has. Aggregate MAE hides that error concentrates on the worst-served stations.",
+      "title": "Fairness: mean absolute error by station",
+      "gridPos": {
+        "h": 9,
+        "w": 16,
+        "x": 0,
+        "y": 19
+      },
+      "description": "Per-station error on hidden test cells. One average hides that some stations are served much worse.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "conμgm3",
+          "displayName": "mean absolute error",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#555555"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "xTickLabelRotation": -45,
+        "xTickLabelSpacing": 0,
+        "showValue": "never",
+        "legend": {
+          "showLegend": false
+        }
+      },
       "targets": [
         {
           "refId": "A",
-          "query": "from(bucket: \"aqi36\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"pm25\" and r._field == \"abs_error\")\n  |> group(columns: [\"station\"])\n  |> mean()\n  |> group()\n  |> sort(columns: [\"_value\"], desc: true)"
+          "query": "from(bucket: \"aqi36\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"pm25\" and r._field == \"abs_error\")\n  |> group(columns: [\"station\"])\n  |> mean()\n  |> group()\n  |> sort(columns: [\"_value\"], desc: true)\n  |> map(fn: (r) => ({station: \"st \" + r.station, _value: r._value}))"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Held back by band risk, per window",
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 16,
+        "y": 19
+      },
+      "description": "Imputed values not published because too many posterior samples fall in a different AQI band.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "displayName": "values held back",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E02F44"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 70,
+            "barAlignment": 0
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "query": "from(bucket: \"aqi36\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"imputation_telemetry\" and r._field == \"n_withheld\")\n  |> group()\n  |> aggregateWindow(every: 1h, fn: sum, createEmpty: false)"
         }
       ]
     }

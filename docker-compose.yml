@@ -59,8 +59,8 @@ services:
       GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
       GF_USERS_DEFAULT_THEME: light
     volumes:
-      - ./dashboards/provisioning:/etc/grafana/provisioning
-      - ./dashboards/json:/var/lib/grafana/dashboards
+      - ./dashboards/provisioning:/etc/grafana/provisioning:ro,z   # z: SELinux relabel (Fedora/RHEL)
+      - ./dashboards/json:/var/lib/grafana/dashboards:ro,z
       - grafana-data:/var/lib/grafana
     depends_on:
       - influxdb

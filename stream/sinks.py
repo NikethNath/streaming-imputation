@@ -25,14 +25,15 @@ class InfluxSink:
         for i, ts in enumerate(timestamps):
             for j, sid in enumerate(stations):
                 was_missing = bool(np.isnan(observed[i, j]))
-                p = (Point("pm25")
-                     .tag("station", sid)
-                     .tag("imputed", "true" if was_missing else "false")
-                     .field("value", float(imputed[i, j]))
-                     .time(ts))
+                # A NaN imputation is a value the band-risk check held back;
+                # InfluxDB cannot store NaN, so record it as its own series.
+                withheld = was_missing and bool(np.isnan(imputed[i, j]))
+                kind = "withheld" if withheld else ("true" if was_missing else "false")
+                p = Point("pm25").tag("station", sid).tag("imputed", kind).time(ts)
+                p = p.field("withheld", 1.0) if withheld else p.field("value", float(imputed[i, j]))
                 if not was_missing:
                     p = p.field("observed", float(observed[i, j]))
-                if bool(eval_mask[i, j]) and not np.isnan(truth[i, j]):
+                if bool(eval_mask[i, j]) and not np.isnan(truth[i, j]) and not withheld:
                     p = p.field("truth", float(truth[i, j]))
                     p = p.field("abs_error", abs(float(imputed[i, j]) - float(truth[i, j])))
                 if lo is not None:
